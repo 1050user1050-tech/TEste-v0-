@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // Validation Blueprints
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'level', 'exp', 'stats', 'inventory']) &&
+             data.keys().size() <= 8 &&
+             data.uid == request.auth.uid &&
+             data.level is int && data.level >= 1 &&
+             data.exp is int && data.exp >= 0 &&
+             data.stats is map &&
+             data.stats.attack is int && data.stats.attack >= 0 &&
+             data.stats.defense is int && data.stats.defense >= 0 &&
+             data.stats.luck is int && data.stats.luck >= 0 &&
+             data.inventory is list &&
+             data.inventory.size() <= 100 &&
+             (data.inventory.size() == 0 || data.inventory[0] is string);
+    }
+
+    function isValidItem(data) {
+      return data.keys().hasAll(['id', 'name', 'type', 'modifiers']) &&
+             data.id is string &&
+             data.name is string && data.name.size() <= 50 &&
+             data.type in ['weapon', 'armor', 'accessory'] &&
+             data.modifiers is map;
+    }
+
+    // 1. Users Collection
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Users shouldn't list other users in this simple RPG
+      
+      allow create: if isOwner(userId) && isValidUser(incoming()) && 
+                    incoming().level == 1 && incoming().exp == 0;
+      
+      allow update: if isOwner(userId) && isValidUser(incoming()) && (
+        // Action: Level Up / Farm Progress
+        (incoming().diff(existing()).affectedKeys().hasOnly(['level', 'exp', 'stats', 'inventory', 'updatedAt', 'equipped'])) &&
+        incoming().uid == existing().uid
+      );
+    }
+
+    // 2. Items Collection (Read Only for all signed-in users)
+    match /items/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Only system should add items
+    }
+  }
+}

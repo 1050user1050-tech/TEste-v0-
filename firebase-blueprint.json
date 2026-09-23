@@ -1,0 +1,155 @@
+{
+  "entities": {
+    "LevelData": {
+      "title": "Level Data",
+      "type": "object",
+      "properties": {
+        "level": { "type": "integer" },
+        "exp": { "type": "integer" }
+      },
+      "required": ["level", "exp"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user stats, inventory and game progress.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string" },
+        "level": { "type": "integer" },
+        "exp": { "type": "integer" },
+        "currencies": {
+          "type": "object",
+          "properties": {
+            "silver": { "type": "integer" },
+            "gold": { "type": "integer" },
+            "crystal": { "type": "integer" }
+          },
+          "required": ["silver", "gold", "crystal"]
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "health": { "type": "integer" },
+            "maxHealth": { "type": "integer" },
+            "physicalAttack": { "type": "integer" },
+            "physicalDefense": { "type": "integer" },
+            "magicAttack": { "type": "integer" },
+            "magicDefense": { "type": "integer" },
+            "luck": { "type": "integer" },
+            "accuracy": { "type": "integer" },
+            "evasion": { "type": "integer" },
+            "speed": { "type": "integer" },
+            "critChance": { "type": "integer" },
+            "critDamage": { "type": "integer" },
+            "lifeSteal": { "type": "integer" }
+          },
+          "required": ["health", "maxHealth", "physicalAttack", "physicalDefense", "magicAttack", "magicDefense", "luck", "accuracy", "evasion", "speed", "critChance", "critDamage", "lifeSteal"]
+        },
+        "skills": {
+          "type": "object",
+          "description": "User skill levels and experience points.",
+          "properties": {
+            "combat": { "$ref": "#/definitions/LevelData" },
+            "physicalAttack": { "$ref": "#/definitions/LevelData" },
+            "magicAttack": { "$ref": "#/definitions/LevelData" },
+            "hp": { "$ref": "#/definitions/LevelData" },
+            "physicalDefense": { "$ref": "#/definitions/LevelData" },
+            "magicDefense": { "$ref": "#/definitions/LevelData" },
+            "evasion": { "$ref": "#/definitions/LevelData" },
+            "speed": { "$ref": "#/definitions/LevelData" },
+            "farmer": { "$ref": "#/definitions/LevelData" },
+            "lumberjack": { "$ref": "#/definitions/LevelData" },
+            "fisherman": { "$ref": "#/definitions/LevelData" },
+            "miner": { "$ref": "#/definitions/LevelData" },
+            "crafter": { "$ref": "#/definitions/LevelData" },
+            "metallurgist": { "$ref": "#/definitions/LevelData" },
+            "potion": { "$ref": "#/definitions/LevelData" },
+            "cook": { "$ref": "#/definitions/LevelData" },
+            "adventurer": { "$ref": "#/definitions/LevelData" },
+            "thief": { "$ref": "#/definitions/LevelData" },
+            "magic": { "$ref": "#/definitions/LevelData" },
+            "merchant": { "$ref": "#/definitions/LevelData" },
+            "knight": { "$ref": "#/definitions/LevelData" },
+            "religion": { "$ref": "#/definitions/LevelData" },
+            "carpenter": { "$ref": "#/definitions/LevelData" }
+          }
+        },
+        "guild": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "rank": { "type": "string" },
+            "joinedAt": { "type": "string" }
+          }
+        },
+        "inventory": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of item IDs owned by the user"
+        },
+        "equipped": {
+          "type": "object",
+          "properties": {
+            "hat": { "type": "string" },
+            "vest": { "type": "string" },
+            "pants": { "type": "string" },
+            "gloves": { "type": "string" },
+            "weapon": { "type": "string" },
+            "shield": { "type": "string" },
+            "special": { "type": "string" },
+            "pet": { "type": "string" }
+          }
+        },
+        "miningStats": {
+          "type": "object",
+          "description": "Record of mined items and counts.",
+          "additionalProperties": { "type": "integer" }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "level", "exp", "stats", "inventory"]
+    },
+    "Item": {
+      "title": "Game Item",
+      "description": "Definition of an item in the game world.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["weapon", "armor", "accessory"] },
+        "modifiers": {
+          "type": "object",
+          "properties": {
+            "health": { "type": "integer" },
+            "maxHealth": { "type": "integer" },
+            "physicalAttack": { "type": "integer" },
+            "physicalDefense": { "type": "integer" },
+            "magicAttack": { "type": "integer" },
+            "magicDefense": { "type": "integer" },
+            "luck": { "type": "integer" },
+            "accuracy": { "type": "integer" },
+            "evasion": { "type": "integer" },
+            "speed": { "type": "integer" },
+            "critChance": { "type": "integer" },
+            "critDamage": { "type": "integer" },
+            "lifeSteal": { "type": "integer" }
+          }
+        }
+      },
+      "required": ["id", "name", "type", "modifiers"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile data"
+    },
+    "/items/{itemId}": {
+      "schema": "Item",
+      "description": "Catalog of all available items"
+    }
+  }
+}

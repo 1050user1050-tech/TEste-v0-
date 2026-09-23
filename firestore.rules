@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'level', 'exp', 'stats', 'inventory', 'skills']) &&
+             data.keys().size() <= 20 &&
+             data.uid == request.auth.uid &&
+             data.level is int && data.level >= 1 &&
+             data.exp is int && data.exp >= 0 &&
+             data.stats is map &&
+             data.skills is map &&
+             data.inventory is list &&
+             data.inventory.size() <= 100 &&
+             (data.inventory.size() == 0 || data.inventory[0] is string);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && 
+                    incoming().level == 1 && incoming().exp == 0;
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['level', 'exp', 'stats', 'inventory', 'updatedAt', 'equipped', 'displayName', 'currencies', 'skills', 'guild', 'miningStats']) &&
+        incoming().uid == existing().uid
+      );
+    }
+
+    match /items/{itemId} {
+      allow read: if isSignedIn() && isValidId(itemId);
+      allow write: if false; 
+    }
+  }
+}
